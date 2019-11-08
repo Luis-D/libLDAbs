@@ -50,7 +50,7 @@ echo "GCC 32"
 Compile gcc -m32 ar $LIBNAME ../GCC/x86-32/ PThreadpool -lpthread so
 
 echo "MINGW 32"
-Compile x86_64-w64-mingw32-gcc -m32  x86_64-w64-mingw32-ar $LIBNAME ../MINGW/x86-32/ PThreadpool -lpthread dll
+Compile i686-w64-mingw32-gcc -m32  i686-w64-mingw32-ar $LIBNAME ../MINGW/x86-32/ PThreadpool -lpthread dll
 
 echo "MINGW 64"
 Compile x86_64-w64-mingw32-gcc -m64 x86_64-w64-mingw32-ar $LIBNAME ../MINGW/x86-64/ PThreadpool -lpthread dll
