@@ -1,9 +1,9 @@
 #include "../ThreadPool.h"
 
-struct LD_ThreadPool_Work{uintptr_t Len;void (*Function) (void*);void*Args;};
+//struct LD_ThreadPool_Work{size_t Len;void* (*Function) (void*);void*Args;};
 
 
-void LD_ThreadPool_Queue_Pool_Init(struct LD_ThreadPool_Queue_Pool * Queue_Pool,uintptr_t Initial_Cap)
+void LD_ThreadPool_Queue_Pool_Init(struct LD_ThreadPool_Queue_Pool * Queue_Pool,size_t Initial_Cap)
 {
     Queue_Pool->Buffer = malloc(Initial_Cap);
     Queue_Pool->Byte_Usage.Capacity = Initial_Cap;
@@ -11,11 +11,9 @@ void LD_ThreadPool_Queue_Pool_Init(struct LD_ThreadPool_Queue_Pool * Queue_Pool,
     Queue_Pool->Current = NULL;
 }
 
-static void __LD_ThreadPool_Queue_Pool_add_EXT(struct LD_ThreadPool_Queue_Pool * Pool, void * Load, uintptr_t Len)
+static void __LD_ThreadPool_Queue_Pool_add_EXT(struct LD_ThreadPool_Queue_Pool * Pool, void * Load, size_t Len)
 {
-    uintptr_t OFFSET = sizeof(struct LD_ThreadPool_Queue_Node) 
-			-sizeof(void*)
-			-(sizeof(void(*)(void*)));
+    uintptr_t OFFSET = sizeof(size_t);
     uintptr_t REAL_LEN = Len+OFFSET;
     uintptr_t CURCUR =Pool->Byte_Usage.Current;
     uintptr_t CURCAP =Pool->Byte_Usage.Capacity ;
@@ -56,7 +54,7 @@ static void __LD_ThreadPool_Queue_Pool_add_EXT(struct LD_ThreadPool_Queue_Pool *
 	    memmove(Pool->Buffer,Pool->Current,CURCUR-IF_GAP);
 	    Pool->Current = Pool->Buffer;
 	    Pool->Byte_Usage.Current = REAL_TOTAL_USED;
-//	    printf("ThreadPool. defragmentation @ %p (Completed) \n",Pool);
+//	    printf("ThreadPool. defragmentation (%lu bytes) @ %p (Completed) \n",CURCUR-IF_GAP,Pool);
     
 	}
 	else
@@ -71,19 +69,19 @@ static void __LD_ThreadPool_Queue_Pool_add_EXT(struct LD_ThreadPool_Queue_Pool *
 	    Pool->Current =(void*) (((uintptr_t)Pool->Buffer)+IF_GAP);
 	    Pool->Byte_Usage.Capacity = NEWCAP;
 	//    printf("AUGMENTED to: %d OK\n ",Pool->Byte_Usage.Capacity);
-	//    printf("ThreadPool Realloc @ %p (Completed)\n",Pool);
+//	    printf("ThreadPool Realloc @ %p (Completed)\n",Pool);
 	}
 
     }
 
     CURCUR =Pool->Byte_Usage.Current;
 
+    memcpy(((char*)Pool->Buffer)+CURCUR,&Len,OFFSET);
     memcpy(((char*)Pool->Buffer)+CURCUR+OFFSET,Load,Len);
-    
-    struct LD_ThreadPool_Queue_Node *New_Last = 
-	    (struct LD_ThreadPool_Queue_Node*)(((uintptr_t) Pool->Buffer)+CURCUR);
 
-    New_Last->Len = Len;
+//    printf("LOADF: %p\n",*((void**)(((char*)Pool->Buffer)+CURCUR+OFFSET)));
+    
+    void *New_Last = (void*)(((uintptr_t) Pool->Buffer)+CURCUR);
 
     if(CURCUR==0)
     {
@@ -102,10 +100,16 @@ static void __LD_ThreadPool_Queue_Pool_add_EXT(struct LD_ThreadPool_Queue_Pool *
 */
 }
 
-void * LD_ThreadPool_Work_enqueue(struct LD_ThreadPool *Pool, void * Workload, uintptr_t Workpile_Length)
+void * LD_ThreadPool_Work_enqueue(struct LD_ThreadPool *Pool,void* (*Function)(void*),void * Arguments, size_t Arguments_Length)
 {
     //printf("START ENQ\n");
     //printf("---> %p\n",*((uintptr_t*)&Pool->Workpile.Cond_Mutex));
+
+    size_t Workpile_Length = Arguments_Length +(sizeof(void*));
+    char Workload[Workpile_Length];
+    memcpy(Workload,&Function,sizeof(void*));
+    memcpy(Workload+sizeof(void*),Arguments,Arguments_Length);
+
     pthread_mutex_lock(&Pool->Workpile.Cond_Mutex);
     //printf("ENQ\n");
 	__LD_ThreadPool_Queue_Pool_add_EXT(&Pool->Workpile.Workpile,Workload,Workpile_Length);
@@ -115,45 +119,41 @@ void * LD_ThreadPool_Work_enqueue(struct LD_ThreadPool *Pool, void * Workload, u
     //getchar();
 }
 
-void * LD_ThreadPool_Work_HEAD(struct LD_ThreadPool_Queue_Pool * Pool)
+
+static void* LD_ThreadPool_Work_dequeue(struct LD_ThreadPool_Queue_Pool * Pool)
 {
-    void * RETURN = NULL;
-
-    RETURN = &((struct LD_ThreadPool_Queue_Node*)Pool->Current)->Len;
-
-    return RETURN;
-}
-
-void* LD_ThreadPool_Work_dequeue(struct LD_ThreadPool_Queue_Pool * Pool)
-{
-    void * RETURN = LD_ThreadPool_Work_HEAD(Pool);
-    Pool->Current = ((char*)RETURN)+((struct LD_ThreadPool_Queue_Node*)RETURN)->Len+sizeof(uintptr_t);
+    void * RETURN = Pool->Current;
+    size_t HEAD_SIZE = *((size_t*)RETURN)+(sizeof(size_t));
+//    printf("HEAD SIZE: %lu\n",HEAD_SIZE);
+    Pool->Current = (void*)(((char*)RETURN)+HEAD_SIZE);
     return RETURN;
 }
 
 static void* LD_ThreadPool_Workpile_Get(void * Pool)
 {
-    //    printf("STARTED @ %p\n",pthread_self());
+//  printf("STARTED @ %p\n",pthread_self());
+
     struct LD_ThreadPool * ThreadPool = (struct LD_ThreadPool*) Pool;
 
-    struct LD_ThreadPool_Work * Work = NULL;
+    void * Work = NULL;
 
     while(1)
     {
 //	printf("Loop start @ %p\n",pthread_self());	
 	pthread_mutex_lock(&ThreadPool->Workpile.Cond_Mutex);
 //	printf("Mutex taken @ %p\n",pthread_self());
-	while((ThreadPool->Workpile.Length == 0 && ThreadPool->Flag==0)) 
-	{
-	    //Mutex UNLOCKED at sleep. Mutex LOCKED at wake//
-	    //		printf("LOCKED @ %p\n",pthread_self());
-	    pthread_cond_wait(&ThreadPool->Workpile.Cond,&ThreadPool->Workpile.Cond_Mutex);
-	   //		printf("UNLOCKED @ %p\n",pthread_self());
-	}
+	    
+	    while((ThreadPool->Workpile.Length == 0 && ThreadPool->Flag==0)) 
+	    {
+		//Mutex UNLOCKED at sleep. Mutex LOCKED at wake//
+		//		printf("LOCKED @ %p\n",pthread_self());
+		pthread_cond_wait(&ThreadPool->Workpile.Cond,&ThreadPool->Workpile.Cond_Mutex);
+	       //		printf("UNLOCKED @ %p\n",pthread_self());
+	    }
 
-	char EXITCOND = (ThreadPool->Flag&1)==1;
-	//printf("\tWLEN: %d @ %p\n",ThreadPool->Workpile.Length,pthread_self());
-	//printf("\tEXIT: %d @ %p\n",EXITCOND,pthread_self());
+	    char EXITCOND = (ThreadPool->Flag&1)==1;
+	    //printf("\tWLEN: %d @ %p\n",ThreadPool->Workpile.Length,pthread_self());
+	    //printf("\tEXIT: %d @ %p\n",EXITCOND,pthread_self());
 
 	    if(ThreadPool->Workpile.Length == 0)
 	    {
@@ -165,22 +165,25 @@ static void* LD_ThreadPool_Workpile_Get(void * Pool)
 	    }
 
 	    
-	     Work= (struct LD_ThreadPool_Work*) LD_ThreadPool_Work_dequeue(&ThreadPool->Workpile.Workpile);
+	    Work= LD_ThreadPool_Work_dequeue(&ThreadPool->Workpile.Workpile);
 
-	    //printf("Work: %ld\n",(uintptr_t)Work);
-	
-	    uintptr_t WorkSize = Work->Len + sizeof(uintptr_t);
-	    
-	    //printf("Len: %d\n",Work->Len);
-	    //printf("Func:%p\n",Work->Function);
+	    size_t WorkSize = *((size_t*)Work);
+	    size_t WorkArgsSize = WorkSize - sizeof(void*);
+	    void * (*WorkFunction) (void*) =(void*) *(void**) (((char*)Work)+(sizeof(size_t)));
+
+	   /* 
+	    printf("->Work: %ld\n",(uintptr_t)Work);
+	    printf("Len: %d\n",WorkSize);
+	    printf("Func:%p\n",WorkFunction);
+*/
+
 	    char WorkBuffer[WorkSize];
-	    memcpy(WorkBuffer,Work,WorkSize);
-	    Work = (struct LD_ThreadPool_Work*) WorkBuffer;
+	    memcpy(WorkBuffer,Work+sizeof(size_t)+sizeof(void*),WorkArgsSize);
 
 	    (ThreadPool->Workpile.Length)--;
 	pthread_mutex_unlock(&ThreadPool->Workpile.Cond_Mutex);
 	
-	Work->Function(&Work->Args);
+	WorkFunction(&WorkBuffer);
 
 //	pthread_mutex_lock(&ThreadPool->Workpile.Cond_Mutex);
 //	    (ThreadPool->Pool.Active_Threads)--;
@@ -190,14 +193,14 @@ static void* LD_ThreadPool_Workpile_Get(void * Pool)
     return NULL;
 }
 
-static void LD_ThreadPool_Workers_Init(struct LD_ThreadPool_Workers * Workers,uintptr_t ThreadsCount,
+static void LD_ThreadPool_Workers_Init(struct LD_ThreadPool_Workers * Workers,size_t ThreadsCount,
     void * ARGS)
 {
     Workers->ThreadsCount = ThreadsCount;
 
     ThreadStruct * tmp = (ThreadStruct*)malloc(sizeof(ThreadStruct)*ThreadsCount);
 
-    for(uintptr_t i = 0; i< ThreadsCount;i++)
+    for(size_t i = 0; i< ThreadsCount;i++)
     {
 	pthread_create(tmp+i,NULL,LD_ThreadPool_Workpile_Get,ARGS);
     }
@@ -205,7 +208,7 @@ static void LD_ThreadPool_Workers_Init(struct LD_ThreadPool_Workers * Workers,ui
     Workers->Thread_Array = tmp;
 }
 
-struct LD_ThreadPool * ThreadPool_Create(uintptr_t ThreadsCount)
+struct LD_ThreadPool * LD_ThreadPool_Create(size_t ThreadsCount)
 {
 //    printf("Creating\n");
     struct LD_ThreadPool * RETURN = (struct LD_ThreadPool*)
@@ -231,9 +234,9 @@ void LD_ThreadPool_Join(struct LD_ThreadPool * Pool)
 {
     (Pool->Flag)|=1;
     pthread_cond_broadcast(&Pool->Workpile.Cond);
-    uintptr_t ThreadsCount = Pool->Workers.ThreadsCount; 
+    size_t ThreadsCount = Pool->Workers.ThreadsCount; 
     ThreadStruct * TA = Pool->Workers.Thread_Array;
-    for(uintptr_t i = 0; i<ThreadsCount;i++)
+    for(size_t i = 0; i<ThreadsCount;i++)
     {
 	pthread_join(TA[i],NULL);
     }

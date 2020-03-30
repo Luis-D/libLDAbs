@@ -5,38 +5,47 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../Object_Pool.h"
+#include "../ObjectPool.h"
 
 struct LD_LinkedList
 {
     void * First;
     void * Last;
-    uintptr_t Length;
-    uintptr_t Object_Size;
-    struct LD_Object_Pool Pool;
+    size_t Length;
+    size_t Object_Size;
+    struct LD_ObjectPool Pool;
 };
 
 #ifndef LD_LINKEDLISTS_ARENA_SIZE 
-    #define LD_LINKEDLISTS_ARENA_SIZE 4096 //<- 4kb
+    #define LD_LINKEDLISTS_ARENA_SIZE (4096-32-32) //<- 4kb
 #endif
 
 #define G_LinkedList_Node_Define(Datatype) void
 
 #define LL_PRO_PRO(x) \
-    uintptr_t Size = (LinkedList->Object_Size);\
+    size_t Size = (LinkedList->Object_Size);\
     void * ptr = __LinkedList_node_allocate(LinkedList);\
     if(ptr==NULL){return NULL;}\
     ptr=((uintptr_t*)ptr)+x;\
     if(Data != NULL){memcpy(ptr,Data,Size);}\
-struct LD_LinkedList * __LinkedList_Init(struct LD_LinkedList*List,uintptr_t Object_Size,uintptr_t Object_Count);
+struct LD_LinkedList * __LinkedList_Init(struct LD_LinkedList*List,size_t Object_Size,size_t Object_Count);
 
-struct LD_LinkedList * __LinkedList_Init(struct LD_LinkedList*List,uintptr_t Object_Size,uintptr_t Object_Count);
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
+struct LD_LinkedList * __LinkedList_Init(struct LD_LinkedList*List,size_t Object_Size,size_t Object_Count);
 
 void * __LinkedList_node_allocate(struct LD_LinkedList * LL);
 
 void __LinkedList_node_deallocate(void * Node);
 
 void __LD_LinkedList_Reset(struct LD_LinkedList * LinkedList);
+
+#ifdef __cplusplus
+}
+#endif
 
     //--- General Macros		---//
 #define LD_LinkedList_Next_to(Data_ptr)	(void*) ((uintptr_t*) (*(((uintptr_t*) Data_ptr)-1)))

@@ -31,7 +31,10 @@ struct LD_STACK_QUEUE_Element_Struct
     void * Data;
 };
 
-
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
 
 void __Stack_Queue_Clear(struct LD_STACK_QUEUE_Struct * Pool);
 
@@ -55,7 +58,10 @@ void * __Stack_Queue_Element_Pop_Top(struct LD_STACK_QUEUE_Struct  * Pool);
 
 void * __Stack_Queue_Element_Pop_Bottom(struct LD_STACK_QUEUE_Struct * Pool);
 
-
+size_t __Stack_Queue_Element_Size(void * Element);
+#ifdef __cplusplus
+}
+#endif
 
 
 #define LD_WEAK_QUEUE struct LD_STACK_QUEUE_Struct
@@ -73,6 +79,7 @@ void * __Stack_Queue_Element_Pop_Bottom(struct LD_STACK_QUEUE_Struct * Pool);
 #define LD_Weak_Queue_Dequeue	__Stack_Queue_Element_Pop_Top
 #define LD_Weak_Queue_First	__Stack_Queue_Element_Top
 #define LD_Weak_Queue_Last		__Stack_Queue_Element_Bottom
+#define LD_Weak_Queue_Element_Size __Stack_Queue_Element_Size
 #define LD_Weak_Queue_Is_Empty	__Stack_Queue_Is_Empty
 
 #define LD_Weak_Stack_Create	__Stack_Queue_Create
@@ -84,6 +91,7 @@ void * __Stack_Queue_Element_Pop_Bottom(struct LD_STACK_QUEUE_Struct * Pool);
 #define	LD_Weak_Stack_Push		__Stack_Queue_Element_Push
 #define LD_Weak_Stack_First	__Stack_Queue_Element_Top
 #define LD_Weak_Stack_Last		__Stack_Queue_Element_Bottom
+#define LD_Weak_Stack_Element_Size __Stack_Queue_Element_Size
 #define LD_Weak_Stack_Is_Empty	__Stack_Queue_Is_Empty
 
 #endif

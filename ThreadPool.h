@@ -16,19 +16,13 @@
 #define MutexStruct pthread_mutex_t
 #define CondStruct pthread_cond_t
 
-struct LD_ThreadPool_Queue_Node
-{
-    uintptr_t Len;
-    void (*Function) (void*);
-    void * Args; //<-- Argument reference;
-};
 
 struct LD_ThreadPool_Queue_Pool
 {
     struct
     {
-	uintptr_t Capacity;
-	uintptr_t Current;
+	size_t Capacity;
+	size_t Current;
     }Byte_Usage;
     void * Buffer; 
     void * Current;
@@ -36,7 +30,7 @@ struct LD_ThreadPool_Queue_Pool
 
 struct LD_ThreadPool_Workers
 {
-    uintptr_t ThreadsCount;
+    size_t ThreadsCount;
 //    uintptr_t Active_Threads;
     //There be thread structs, void * Data is just for reference the start of Threads List/
     ThreadStruct * Thread_Array;
@@ -46,7 +40,7 @@ struct LD_ThreadPool_Workpile
 {
     MutexStruct Cond_Mutex;
     CondStruct Cond;
-    uintptr_t Length; 
+    size_t Length; 
     struct LD_ThreadPool_Queue_Pool Workpile;
 };
 
@@ -57,20 +51,26 @@ struct LD_ThreadPool
     struct LD_ThreadPool_Workers Workers;	    
 };
 #define THREADPOOL struct LD_ThreadPool
+#define LD_THREADPOOL struct LD_ThreadPool
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
 
-void LD_ThreadPool_Queue_Pool_Init(struct LD_ThreadPool_Queue_Pool * Queue_Pool,uintptr_t Initial_Cap);
+void LD_ThreadPool_Queue_Pool_Init(struct LD_ThreadPool_Queue_Pool * Queue_Pool,size_t Initial_Cap);
 
-void * LD_ThreadPool_Work_enqueue(struct LD_ThreadPool *Pool, void * Workload, uintptr_t Workpile_Length);
+void * LD_ThreadPool_Work_enqueue(struct LD_ThreadPool *Pool,void* (*Function)(void*), void * Arguments, size_t Arguments_Length);
 
-void * LD_ThreadPool_Work_HEAD(struct LD_ThreadPool_Queue_Pool * Pool);
-
-void * LD_ThreadPool_Work_dequeue(struct LD_ThreadPool_Queue_Pool * Pool);
-
-struct LD_ThreadPool * ThreadPool_Create(uintptr_t ThreadsCount);
+struct LD_ThreadPool * LD_ThreadPool_Create(size_t ThreadsCount);
 
 void LD_ThreadPool_Join(struct LD_ThreadPool * Pool);
 
 #define LD_ThreadPool_IsEmpty(ThreadPool_ptr) ((ThreadPool_ptr)->Workpile.Length==0)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

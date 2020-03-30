@@ -13,7 +13,7 @@
 //#include "Weak_Stack_Queue.h"
 
 #ifndef LD_WEAK_STACK_QUEUE_POOL_SIZE 
-    #define LD_WEAK_STACK_QUEUE_POOL_SIZE 4096 //<-4kb
+    #define LD_WEAK_STACK_QUEUE_POOL_SIZE 4096-32-32 //<-4kb, minus some margin
 #endif
 
 struct LD_STACK_QUEUE_Struct
@@ -39,6 +39,17 @@ struct LD_STACK_QUEUE_Element_Struct
 
 #define LD_STACK_QUEUE_ptr(x) ((struct LD_STACK_QUEUE_Struct*)x)
 
+#include <stddef.h>
+size_t __Stack_Queue_Element_Size(void * Element)
+{
+    return *( (size_t*) 
+		(
+		    ((char*)Element)
+		    -offsetof(struct LD_STACK_QUEUE_Element_Struct,Data)
+		    +offsetof(struct LD_STACK_QUEUE_Element_Struct,Size)
+		)
+	    );
+}
 
 void __Stack_Queue_Clear(struct LD_STACK_QUEUE_Struct * Pool)
 {
