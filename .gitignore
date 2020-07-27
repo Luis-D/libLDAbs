@@ -1,0 +1,5 @@
+cmaketest
+cmakerelease
+cmakedebug
+BUILD
+*.o

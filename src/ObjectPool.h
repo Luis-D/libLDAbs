@@ -63,6 +63,7 @@ LD_OBJECTPOOL * LD_ObjectPool_Create(size_t Object_Size);
 /**
  * @brief Creates an Object Pool with specified Object count per Arena.
  * @details it behaves in the same way than LD_ObjectPool_Create()
+ * @details BE CAREFUL as the parameter orders may seen inverted, the Object Count goes first!.
  * @param Object_Count Number of objects per created Arena.
  * @param Object_Size The size in bytes of each object.
  */

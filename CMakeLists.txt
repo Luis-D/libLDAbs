@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.0)
 SET(PROJECTNAME LDAbs )
 
 project(lib${PROJECTNAME}
-    VERSION 1.1.1
+    VERSION 2.0
     DESCRIPTION "Abstract Data Types for C programming language"
     HOMEPAGE_URL https://github.com/Luis-D/libLDAbs
     LANGUAGES "C"
