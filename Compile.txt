@@ -1,0 +1,16 @@
+To compile using CMAKE:
+    - CREATE A FOLDER
+    - execute: cd FOLDER; cmake ..; make;
+    - Being in FOLDER, install with: make install;
+    - Documentation can me compiled with: make docs;
+
+
+Compile options:
+    See CMakeList for a list of recommended options.
+
+
+To uninstall:
+    - Check install_manifest.txt
+
+
+- Luis Delgado. July 25th, 2020
