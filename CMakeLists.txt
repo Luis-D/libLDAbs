@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.0)
 SET(PROJECTNAME LDAbs )
 
 project(lib${PROJECTNAME}
-    VERSION 2.0
+    VERSION 2.0.1
     DESCRIPTION "Abstract Data Types for C programming language"
     HOMEPAGE_URL https://github.com/Luis-D/libLDAbs
     LANGUAGES "C"
@@ -43,6 +43,7 @@ set (srcs
 set (LIB_INSTALL ${CMAKE_INSTALL_PREFIX}/lib)
 set (INC_INSTALL ${CMAKE_INSTALL_PREFIX}/include)
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_library(${PROJECTNAME}  ${srcs} ${SRCSDIR}/ThreadPool/PThreadpool.c)
 
