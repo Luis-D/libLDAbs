@@ -77,10 +77,10 @@ void LD_LinkedList_Clear(struct LD_LinkedList * LinkedList);
     //--- General Macros		---//
     
 /** 
- *  @brief Get the lenght of the Linked List 
+ *  @brief Get the lenght of the Linked List. 
  *  @details It is recommended to use this to check whether the Linked List is empty.
  *  @param List_ptr Pointer of a Linked List.
- *  @return It returns the number of Nodes in the Linked List
+ *  @return It returns the number of Nodes in the Linked List.
  */
 #define LD_LinkedList_Length(List_ptr) ((struct LD_LinkedList*)List_ptr)->Length
 

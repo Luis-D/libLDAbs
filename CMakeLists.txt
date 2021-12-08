@@ -1,4 +1,5 @@
 #Luis Delgado. 2020
+#Luis Delgado. 2021
 
 #CMake file
 
@@ -13,7 +14,7 @@ cmake_minimum_required(VERSION 3.0)
 SET(PROJECTNAME LDAbs )
 
 project(lib${PROJECTNAME}
-    VERSION 2.0.1
+    VERSION 2.1.0
     DESCRIPTION "Abstract Data Types for C programming language"
     HOMEPAGE_URL https://github.com/Luis-D/libLDAbs
     LANGUAGES "C"
@@ -37,6 +38,7 @@ set (srcs
 	${SRCSDIR}/SinglyLinkedList.c
 	${SRCSDIR}/Weak_Stack_Queue.c
 	${SRCSDIR}/ThreadPool.c
+	${SRCSDIR}/HashMap.c
     )
 
 
@@ -45,7 +47,13 @@ set (INC_INSTALL ${CMAKE_INSTALL_PREFIX}/include)
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-add_library(${PROJECTNAME}  ${srcs} ${SRCSDIR}/ThreadPool/PThreadpool.c)
+
+
+add_library(${PROJECTNAME}  STATIC ${srcs} ${SRCSDIR}/ThreadPool/PThreadpool.c)
+
+#add_library(${PROJECTNAME}  ${srcs} ${SRCSDIR}/ThreadPool/PThreadpool.c)
+
+
 
 IF ( NOT NOT_INCLUDES)
 

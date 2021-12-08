@@ -12,5 +12,11 @@ Compile options:
 To uninstall:
     - Check install_manifest.txt
 
+MinWG:
+    -There should be an installed CMAKE and MAKE version for MinGW
+    -For static libraries maybe an STATIC instruction should be added
 
 - Luis Delgado. July 25th, 2020
+
+Updates:
+- Luis Delgado. June, 08, 2021
