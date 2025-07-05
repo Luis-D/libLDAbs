@@ -8,13 +8,13 @@
 
 
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 
 SET(PROJECTNAME LDAbs )
 
 project(lib${PROJECTNAME}
-    VERSION 2.1.0
+    VERSION 3.0.0
     DESCRIPTION "Abstract Data Types for C programming language"
     HOMEPAGE_URL https://github.com/Luis-D/libLDAbs
     LANGUAGES "C"
@@ -39,6 +39,7 @@ set (srcs
 	${SRCSDIR}/Weak_Stack_Queue.c
 	${SRCSDIR}/ThreadPool.c
 	${SRCSDIR}/HashMap.c
+	${SRCSDIR}/DynamicMemory.c
     )
 
 

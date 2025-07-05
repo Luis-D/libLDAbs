@@ -162,8 +162,8 @@ void LD_LinkedList_attach_Next_to(void* Node_ref ,void * Node);
 
 
 //Some arcane functions:
-LD_LINKEDLIST * LD_LinkedList_Init(LD_LINKEDLIST * LinkedList, size_t Object_Size);
-LD_LINKEDLIST * LD_LinkedList_Init_EXT(LD_LINKEDLIST * LinkedList,size_t Object_Size, size_t Object_Count);
+void LD_LinkedList_Init(LD_LINKEDLIST * LinkedList, size_t Object_Size);
+void LD_LinkedList_Init_EXT(LD_LINKEDLIST * LinkedList,size_t Object_Size, size_t Object_Count);
 void LD_LinkedList_deInit(LD_LINKEDLIST * LinkedList);
 void LD_LinkedList_Make_Circular(LD_LINKEDLIST * LinkedList);
 

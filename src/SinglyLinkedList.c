@@ -25,6 +25,22 @@
     void * LLL = LinkedList->Last;\
     void * LLF = LinkedList->First
 
+
+
+void LD_LinkedList_Init_EXT(LD_LINKEDLIST * LinkedList,size_t Object_Size, size_t Object_Count){
+
+    size_t Real_Size = Object_Size+(2*sizeof(void*));
+
+    __LinkedList_Init(LinkedList,Real_Size,Object_Count);
+    
+    LinkedList->Object_Size = Object_Size; //<-- KEEP AN EYE
+}
+
+void LD_LinkedList_Init(LD_LINKEDLIST * LinkedList, size_t Object_Size){
+    size_t Object_Count = LD_LINKEDLISTS_ARENA_SIZE/(Object_Size);
+    LD_LinkedList_Init_EXT(LinkedList,Object_Size,Object_Count);
+}
+
 struct LD_LinkedList * LD_LinkedList_Create_EXT (size_t Object_Size, size_t Object_Count)
 {
     if(Object_Count==0){return NULL;}
@@ -33,11 +49,7 @@ struct LD_LinkedList * LD_LinkedList_Create_EXT (size_t Object_Size, size_t Obje
 	(struct LD_LinkedList*)malloc(sizeof(struct LD_LinkedList));
     if(RETURN==NULL){return NULL;}
 
-    size_t Real_Size = Object_Size+(2*sizeof(void*));
-
-    __LinkedList_Init(RETURN,Real_Size,Object_Count);
-    
-    RETURN->Object_Size = Object_Size; //<-- KEEP AN EYE
+    LD_LinkedList_Init_EXT(RETURN,Object_Size,Object_Count);
 
     return RETURN;
 }
@@ -118,9 +130,14 @@ void LD_LinkedList_attach_prepend(struct LD_LinkedList * LinkedList,void * Node)
 
 void LD_LinkedList_attach_append(struct LD_LinkedList * LinkedList, void * Node)
 {
-    __gll_s_ptr(_SLL_Head(LinkedList->Last))->Next=Node;
+    if(LinkedList->Last != NULL){
+        __gll_s_ptr(_SLL_Head(LinkedList->Last))->Next=Node;
+    }
     __gll_s_ptr(_SLL_Head(Node))->List=LinkedList;
     LinkedList->Last=Node;
+    if(LinkedList->First == NULL){
+	LinkedList->First = Node;
+    }
     (LinkedList->Length)++;
 }
 

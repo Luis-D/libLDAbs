@@ -107,12 +107,14 @@ struct LD_ObjectPool * LD_ObjectPool_Init_EXT(struct LD_ObjectPool * Pool,
     Pool->Arena_Capacity = Object_Count;
     Pool->Object_Size = Object_Size;
 
-    struct LD_ObjectPool_Arena_Struct * ARENA = __ObjectPool_Arena_Create(Pool,Object_Count,Object_Size);
+//    struct LD_ObjectPool_Arena_Struct * ARENA = __ObjectPool_Arena_Create(Pool,Object_Count,Object_Size);
     //printf("--->%p\n",ARENA);
-    if(ARENA==NULL){return NULL;}
-    ARENA->Next=NULL;
-    Pool->Data = ARENA;
-    Pool->Free_List =(struct LD_ObjectPool_Element_Free_Struct*) &ARENA->Data;
+ //   if(ARENA==NULL){return NULL;}
+ //   ARENA->Next=NULL;
+ //   Pool->Data = ARENA;
+ //   Pool->Free_List =(struct LD_ObjectPool_Element_Free_Struct*) &ARENA->Data;
+    Pool->Data = NULL;
+    Pool->Free_List = NULL;
 
     return Pool;
 }
