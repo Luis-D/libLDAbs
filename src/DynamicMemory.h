@@ -7,8 +7,7 @@
 // Version 1: 11th June, 2024
 
 #ifndef LD_OBJECT_DYN_H
-    #define LD_OBJECT_DYN_H
-#endif
+#define LD_OBJECT_DYN_H
 
 #include <stddef.h>
 
@@ -105,4 +104,5 @@ void * LD_DynamicMem_Realloc(void * Object,size_t Size);
 #ifdef __cplusplus
 }
 #endif
-#undef LD_OBJECT_DYN_H
+
+#endif
