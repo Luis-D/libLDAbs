@@ -163,7 +163,8 @@ void*LD_DynamicMem_Alloc(LD_DYNAMICMEM*DynMem,size_t Size)
     return ptr;
 }
 
-void LD_DynamicMem_Free(void * Object){
+void LD_DynamicMem_Free(void * Object)
+{
     struct LD_DynamicMem_Tree_Node_Header * Cur = (((void*)Object)-sizeof(struct LD_DynamicMem_Tree_Node_Header));
     
     struct LD_DynamicMem_Tree_Node_Header * Parent = Cur->Parent;
@@ -264,4 +265,7 @@ __Realloc_NoSpace:
 }
 
 
-
+size_t LD_DynamicMem_Sizeof(void * Object){
+    struct LD_DynamicMem_Tree_Node_Header * Cur = (((void*)Object)-sizeof(struct LD_DynamicMem_Tree_Node_Header));
+    return Cur->Net_Size;
+}

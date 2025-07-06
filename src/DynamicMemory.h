@@ -101,6 +101,14 @@ void LD_DynamicMem_Free(void * Object);
  */
 void * LD_DynamicMem_Realloc(void * Object,size_t Size);
 
+/**
+ * @brief It returns the total Available usable space of the object block.
+ * @details It will return the block available space, not the object total size.
+ * @return It returns a an unsigned integer that is the total net size of the usable space.
+ * @param Object Is the previusly allocated object.
+ */
+size_t LD_DynamicMem_Sizeof(void * Object);
+
 #ifdef __cplusplus
 }
 #endif
