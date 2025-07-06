@@ -5,6 +5,7 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
 LD_DYNAMICMEM * LD_DynamicMemory_Init(LD_DYNAMICMEM * DynMem)
 {
@@ -63,6 +64,7 @@ static struct LD_DynamicMem_Arena_Header *__DynamicMem_Arena_Create(size_t size)
 	struct LD_DynamicMem_Arena_Header * Arena = 
 		(struct LD_DynamicMem_Arena_Header*) tmp;
 	Arena->Next = NULL;
+	Arena->Parent = NULL;
 	__DynamicMem_Tree_Node_Header_Init(&Arena->Root,
 		size-sizeof(struct LD_DynamicMem_Arena_Header),
 		NULL);
@@ -152,6 +154,7 @@ void*LD_DynamicMem_Alloc(LD_DYNAMICMEM*DynMem,size_t Size)
 			struct LD_DynamicMem_Arena_Header * Dat = 
 				 __DynamicMem_Arena_Create(LD_DYNMEM_DEFAULT_ARENA_SIZE);
 			Dat->Next = DynMem->Data;
+			Dat->Parent = DynMem;
 			DynMem->Data = Dat;
 			break;
 		    }
@@ -162,7 +165,103 @@ void*LD_DynamicMem_Alloc(LD_DYNAMICMEM*DynMem,size_t Size)
 
 void LD_DynamicMem_Free(void * Object){
     struct LD_DynamicMem_Tree_Node_Header * Cur = (((void*)Object)-sizeof(struct LD_DynamicMem_Tree_Node_Header));
-    __DynamicMem_Tree_Node_Header_Init(Cur,Cur->Net_Size,Cur->Parent);
+    
+    struct LD_DynamicMem_Tree_Node_Header * Parent = Cur->Parent;
+    
+    //Check sister Node, if both are to be empty, just reset the parent to claim more space
+    if(Parent != NULL){
+	struct LD_DynamicMem_Tree_Node_Header * L = Parent->Left;
+	struct LD_DynamicMem_Tree_Node_Header * R = Parent->Right;
+
+	if( ((L != Cur)&&((L->Right==NULL)&&(L->Left==NULL)&&(L->Free==1)))
+	    ||
+	    ((R != Cur)&&((R->Right==NULL)&&(R->Left==NULL)&&(R->Free==1)))
+	    ){
+	    
+	    __DynamicMem_Tree_Node_Header_Init(Parent,Parent->Net_Size,Parent->Parent);
+	    return;
+	}
+    }
+
+    __DynamicMem_Tree_Node_Header_Init(Cur,Cur->Net_Size,Parent);
 }
+
+void*LD_DynamicMem_Realloc(void * Object,size_t Size){
+    struct LD_DynamicMem_Tree_Node_Header * Cur = (((void*)Object)-sizeof(struct LD_DynamicMem_Tree_Node_Header));
+    struct LD_DynamicMem_Tree_Node_Header * Parent = Cur->Parent;
+    if(Parent == NULL){
+	return NULL;
+    }
+   
+    //If available space of Parent plus the header of Right is not enough, fully realloc.
+    if(Size>(Parent->Net_Size-sizeof(struct LD_DynamicMem_Tree_Node_Header)))
+	{goto __Realloc_NoSpace;}
+
+    struct LD_DynamicMem_Tree_Node_Header * PL = Parent->Left;
+    struct LD_DynamicMem_Tree_Node_Header * PR = Parent->Right;
+
+    
+
+    if(Cur == PR){ //Try to move to Left
+	if((PL->Free==1) && ((PL->Left==NULL)&&(PL->Right==NULL))){
+	    memcpy(((void*)PL)+sizeof(struct LD_DynamicMem_Tree_Node_Header),PR,PR->Net_Size);
+	    PL->Net_Size=Size;
+	    //We still need to recreate Right after corrupting it memmoving Right to Left by force
+	}
+    }else{  //Try to take space from Right (Left and Right are not corrupted here!)
+	if(!((PR->Free==1)&&((PR->Left==NULL)&&(PR->Right==NULL)))){ //If Right is NOT free
+	    //If Right is not free and so it can not be resized, then a new arena must be created. 
+	    goto __Realloc_NoSpace;
+	}
+    }
+
+    //So, if it was originally Right, it was moved to Left
+    //if it was orifinally Left, then Right must the reconstructed anyway
+
+    struct LD_DynamicMem_Tree_Node_Header * NewPR = //New Pointer of Right
+	(void*)(((void*)PL)+(Size)+sizeof(struct LD_DynamicMem_Tree_Node_Header));
+   
+    //Get the limit of the Parent 
+    void * LimitR = ((void*)(Parent))+
+	sizeof(struct LD_DynamicMem_Tree_Node_Header)+
+	(Parent->Net_Size);
+	
+    __DynamicMem_Tree_Node_Header_Init(NewPR, 
+	LimitR-((void*)NewPR)+sizeof(struct LD_DynamicMem_Tree_Node_Header),
+	Parent
+    );
+
+    Parent->Right=NewPR;
+    PL->Net_Size = Size;
+
+	//Return the object again, the pointer is the same, Right gave its space
+    return (void*)(((void*)PL)+sizeof(struct LD_DynamicMem_Tree_Node_Header));
+
+__Realloc_NoSpace:
+
+    //Find root parent
+    while(Parent != NULL){
+	Cur = Parent;
+	Parent = Parent->Parent;
+    }
+
+    struct LD_DynamicMem_Arena_Header * ArenaHeader = 
+	(void*)(
+	    ((void*)Cur)-
+	    sizeof(struct LD_DynamicMem_Arena_Header)+
+	    sizeof(struct LD_DynamicMem_Tree_Node_Header)
+	);
+
+    LD_DYNAMICMEM * Arena = ArenaHeader->Parent;
+
+    void * RET =  LD_DynamicMem_Alloc(Arena,Size);
+    memcpy(RET,Object,Size);
+
+
+    LD_DynamicMem_Free(Object);
+
+    return RET;
+}
+
 
 

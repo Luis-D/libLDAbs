@@ -21,9 +21,9 @@ struct LD_DynamicMem_Tree_Node_Header{
 };
 
 struct LD_DynamicMem_Arena_Header{
+	void * Parent;
 	struct LD_DynamicMem_Arena_Header * Next;
 	struct LD_DynamicMem_Tree_Node_Header Root;
-	//size_t Net_Size;
 };
 
 
@@ -90,6 +90,17 @@ void * LD_DynamicMem_Alloc(LD_DYNAMICMEM * DynMem,size_t Size);
  *  @param Object Pointer to the instance to "free".
  */
 void LD_DynamicMem_Free(void * Object);
+
+
+/**
+ * @brief Retrieve an usable pointer to a newly reallocated space.
+ * @details It behaves much like Realloc.
+ * @details The just returned memory space will have the same data.
+ * @return It returns a pointer to the object, this pointer can be re-casted into aproppiate type.
+ * @param DynMem Pointer to the base Dynamic memory System.
+ * @param Size The Size in Bytes of the required memory space..
+ */
+void * LD_DynamicMem_Realloc(void * Object,size_t Size);
 
 #ifdef __cplusplus
 }
